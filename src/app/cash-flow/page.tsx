@@ -30,14 +30,14 @@ export default function CashFlowPage() {
         <MetricCard label="Cycle Start" value={`Day ${state.settings.salaryDate}`} icon={CalendarDays} tone="success" />
       </section>
 
-      <section className="mt-4 rounded-[var(--notion-radius)] bg-[var(--notion-tint-yellow-bold)] p-4 text-sm font-medium text-[var(--notion-charcoal)]">
+      <section className="mt-4 rounded-[var(--notion-radius)] border border-[#fedf89] bg-[var(--notion-tint-yellow)] p-4 text-sm font-medium text-[var(--notion-charcoal)]">
         Divide income as soon as it arrives. Fund deposits protect money; transfers physically move money between locations.
       </section>
 
       <section className="mt-5">
         <SectionHeader
           title="Money action plan"
-          description="Follow these blocks in order when each income source arrives."
+          description="Follow these blocks in order when each income source arrives. Each phase is a focused allocation drawer."
         />
         <div className="space-y-4">
           {CASH_FLOW_PHASES.map((phase, index) => {
@@ -45,19 +45,27 @@ export default function CashFlowPage() {
             const percent = phase.amount > 0 ? Math.min((allocated / phase.amount) * 100, 100) : 0;
             const remaining = Math.max(phase.amount - allocated, 0);
             return (
-              <article key={phase.id} className="notion-card overflow-hidden">
-                <div className="grid gap-4 bg-white p-4 lg:grid-cols-[220px_1fr]">
+              <details key={phase.id} className="notion-card overflow-hidden" open={index === 0}>
+                <summary className="grid cursor-pointer list-none gap-3 bg-white p-4 lg:grid-cols-[220px_1fr]">
                   <div className="rounded-[var(--notion-radius)] bg-[var(--notion-brand-navy)] p-4 text-white">
                     <Pill tone="dark">Step {index + 1}</Pill>
                     <h2 className="mt-3 text-xl font-semibold">{phase.title}</h2>
                     <p className="mt-1 text-sm text-white/70">{phase.subtitle}</p>
-                    <div className="mt-4">
-                      <p className="text-sm text-white/70">Income</p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-3 sm:items-center">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-[var(--notion-slate)]">Income</p>
                       <BDTAmount amount={phase.amount} size="lg" />
                     </div>
+                    <div>
+                      <p className="text-xs text-[var(--notion-slate)]">Allocated</p>
+                      <p className="font-semibold"><BDTAmount amount={allocated} /></p>
+                    </div>
+                    <Pill tone={percent >= 100 ? "success" : "primary"}>{formatPercent(percent)}</Pill>
                   </div>
+                </summary>
 
-                  <div>
+                <div className="border-t border-[var(--notion-hairline)] bg-white p-4">
                     <div className="mb-4 grid gap-3 sm:grid-cols-3">
                       <div className="rounded-xl bg-[var(--notion-surface-soft)] p-3">
                         <p className="text-xs text-[var(--notion-slate)]">Allocated</p>
@@ -89,9 +97,8 @@ export default function CashFlowPage() {
                         </div>
                       ))}
                     </div>
-                  </div>
                 </div>
-              </article>
+              </details>
             );
           })}
         </div>

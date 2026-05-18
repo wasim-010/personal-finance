@@ -112,7 +112,7 @@ export default function BudgetPage() {
         <div className="mb-3 flex items-center justify-between gap-3">
           <div>
             <p className="text-sm font-semibold text-[var(--notion-ink)]">Cycle budget usage</p>
-            <p className="text-sm text-[var(--notion-slate)]">Summary first. Open a group only when you need category detail.</p>
+            <p className="text-sm text-[var(--notion-slate)]">Summary first. Category detail stays tucked into focused groups.</p>
           </div>
           <Pill tone={health === "Safe" ? "success" : health === "Careful" ? "warning" : "danger"}>{health}</Pill>
         </div>
@@ -122,30 +122,32 @@ export default function BudgetPage() {
       <section className="mt-5">
         <SectionHeader
           title="Budget groups"
-          description="Grouped rows are easier to scan than a long stack of identical cards."
+          description="Groups stay closed until you need category detail."
         />
         <div className="space-y-3">
-          {groups.map((group, index) => {
+          {groups.map((group) => {
             const limit = group.categories.reduce((sum, category) => sum + (budgets[category] ?? 0), 0);
             const spent = group.categories.reduce((sum, category) => sum + (spentByBudget.get(category) ?? 0), 0);
             const percent = limit > 0 ? (spent / limit) * 100 : spent > 0 ? 100 : 0;
+            const left = Math.max(limit - spent, 0);
             return (
               <GroupPanel
                 key={group.title}
                 title={group.title}
                 subtitle={group.helper}
-                defaultOpen={index < 3}
+                defaultOpen={false}
                 summary={
-                  <div className="hidden min-w-44 sm:block">
-                    <div className="mb-1 flex items-center justify-between text-xs text-[var(--notion-slate)]">
-                      <span><BDTAmount amount={spent} /></span>
+                  <div className="min-w-44">
+                    <div className="mb-1 flex items-center justify-between gap-3 text-xs text-[var(--notion-slate)]">
+                      <span><BDTAmount amount={spent} /> / <BDTAmount amount={limit} /></span>
                       <span>{formatPercent(percent)}</span>
                     </div>
                     <ProgressBar value={percent} tone={percent >= 100 && limit > 0 ? "rose" : "emerald"} />
+                    <p className="mt-1 text-right text-xs text-[var(--notion-slate)]"><BDTAmount amount={left} /> left</p>
                   </div>
                 }
               >
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {group.categories.map((category) => (
                     <BudgetRow
                       key={category}
@@ -170,11 +172,11 @@ function BudgetRow({ category, spent, limit }: { category: BudgetCategory; spent
   const tone = status === "Over Budget" ? "danger" : status === "Careful" ? "warning" : status === "Safe" ? "success" : "neutral";
 
   return (
-    <div className="rounded-xl border border-[var(--notion-hairline)] bg-white p-3">
-      <div className="grid gap-3 sm:grid-cols-[1fr_220px_auto] sm:items-center">
+    <div className="rounded-lg border border-[var(--notion-hairline)] bg-white px-3 py-2 transition hover:border-[var(--notion-hairline-strong)]">
+      <div className="grid gap-2 sm:grid-cols-[1fr_180px_auto] sm:items-center">
         <div>
-          <p className="font-semibold text-[var(--notion-ink)]">{category}</p>
-          <p className="mt-1 text-sm text-[var(--notion-slate)]">
+          <p className="text-sm font-semibold text-[var(--notion-ink)]">{category}</p>
+          <p className="mt-0.5 text-xs text-[var(--notion-slate)]">
             <BDTAmount amount={spent} /> spent {limit > 0 ? <>of <BDTAmount amount={limit} /></> : "tracked"}
           </p>
         </div>

@@ -45,6 +45,8 @@ export const transactionTypeOptions: { value: TransactionType; label: string }[]
   { value: "transfer", label: "Location Transfer" },
 ];
 
+const mostUsedTypes: TransactionType[] = ["expense", "income", "fund_deposit"];
+
 export const locationOptions: { value: Location; label: string }[] = [
   { value: "bank", label: "Bank" },
   { value: "wallet", label: "Wallet / Cash in Hand" },
@@ -314,28 +316,53 @@ export function AddEntryForm() {
           title="What are you recording?"
           description="Choose one type. The form below will only show the fields needed for that money movement."
         />
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-          {transactionTypeOptions.map((option) => {
+        <div className="grid grid-cols-3 gap-2">
+          {transactionTypeOptions.filter((option) => mostUsedTypes.includes(option.value)).map((option) => {
             const active = form.type === option.value;
             return (
               <button
                 key={option.value}
                 type="button"
                 onClick={() => setType(option.value)}
-                className={`rounded-xl border p-3 text-left transition ${
+                className={`min-h-12 rounded-xl border p-2 text-center transition sm:p-3 sm:text-left ${
                   active
                     ? "border-[var(--notion-primary)] bg-[var(--notion-tint-lavender)] text-[var(--notion-primary-deep)] shadow-[inset_0_0_0_1px_rgba(109,74,255,0.12)]"
                     : "border-[var(--notion-hairline)] bg-white text-[var(--notion-ink)] hover:border-[var(--notion-hairline-strong)]"
                 }`}
               >
                 <span className="text-sm font-semibold">{option.label}</span>
-                <span className={`mt-1 block text-xs ${active ? "text-[var(--notion-primary-deep)]" : "text-[var(--notion-slate)]"}`}>
+                <span className={`mt-1 hidden text-xs sm:block ${active ? "text-[var(--notion-primary-deep)]" : "text-[var(--notion-slate)]"}`}>
                   {transactionTypeHelpers[option.value]}
                 </span>
               </button>
             );
           })}
         </div>
+        <details className="mt-3">
+          <summary className="cursor-pointer rounded-xl border border-[var(--notion-hairline)] bg-white px-3 py-2 text-sm font-semibold text-[var(--notion-slate)]">More entry types</summary>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {transactionTypeOptions.filter((option) => !mostUsedTypes.includes(option.value)).map((option) => {
+              const active = form.type === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setType(option.value)}
+                  className={`min-h-12 rounded-xl border p-3 text-left transition ${
+                    active
+                      ? "border-[var(--notion-primary)] bg-[var(--notion-tint-lavender)] text-[var(--notion-primary-deep)]"
+                      : "border-[var(--notion-hairline)] bg-white text-[var(--notion-ink)]"
+                  }`}
+                >
+                  <span className="text-sm font-semibold">{option.label}</span>
+                  <span className={`mt-1 block text-xs ${active ? "text-[var(--notion-primary-deep)]" : "text-[var(--notion-slate)]"}`}>
+                    {transactionTypeHelpers[option.value]}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </details>
       </section>
 
       <section className="notion-card p-4">
@@ -348,10 +375,7 @@ export function AddEntryForm() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Date">
-            <input className="input" type="date" value={form.date} onChange={(event) => setForm({ ...form, date: event.target.value })} />
-          </Field>
-          <div className="rounded-xl bg-[var(--notion-surface-soft)] p-3 text-sm text-[var(--notion-slate)]">
+          <div className="hidden rounded-xl bg-[var(--notion-surface-soft)] p-3 text-sm text-[var(--notion-slate)] sm:block sm:col-span-2">
             <p className="font-semibold text-[var(--notion-ink)]">Fast entry rule</p>
             <p className="mt-1">Amount, category, date, and location are enough for most entries.</p>
           </div>
@@ -370,9 +394,17 @@ export function AddEntryForm() {
           {form.type === "transfer" && <TransferEntry form={form} setForm={setForm} costPerKm={costPerKm} />}
           </div>
 
-          <Field label="Notes">
-            <input className="input" value={form.notes} placeholder="Optional" onChange={(event) => setForm({ ...form, notes: event.target.value })} />
+          <Field label="Date">
+            <input className="input" type="date" value={form.date} onChange={(event) => setForm({ ...form, date: event.target.value })} />
           </Field>
+          <details className="sm:col-span-2">
+            <summary className="cursor-pointer rounded-xl border border-[var(--notion-hairline)] bg-white px-3 py-2 text-sm font-semibold text-[var(--notion-slate)]">Optional notes</summary>
+            <div className="mt-3">
+              <Field label="Notes">
+                <input className="input" value={form.notes} placeholder="Optional" onChange={(event) => setForm({ ...form, notes: event.target.value })} />
+              </Field>
+            </div>
+          </details>
         </div>
       </section>
 
@@ -390,7 +422,7 @@ export function AddEntryForm() {
       {error ? <p className="rounded-[var(--notion-radius)] bg-[var(--notion-tint-rose)] px-4 py-3 text-sm text-[var(--notion-error)]">{error}</p> : null}
       {saved ? <p className="rounded-[var(--notion-radius)] bg-[var(--notion-brand-navy)] px-4 py-3 text-sm text-white">{saved}</p> : null}
 
-      <div className="sticky bottom-20 z-10 lg:static">
+      <div className="sticky bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-10 lg:static">
         <button className="notion-primary-button flex h-14 w-full items-center justify-center gap-2 text-base">
           <Save size={20} />
           Save Entry {amount > 0 ? <BDTAmount amount={amount} /> : null}

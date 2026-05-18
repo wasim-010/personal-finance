@@ -26,14 +26,14 @@ export default function DebtPage() {
         action={<Link href="/add" className="notion-primary-button"><PlusCircle size={19} /> Add payment</Link>}
       />
 
-      <section className="notion-hero-band mb-5 p-5 sm:p-7">
+      <section className="notion-hero-band mb-5 p-4 sm:p-7">
         <div className="grid gap-5 lg:grid-cols-[1fr_0.75fr] lg:items-center">
           <div>
             <div className="flex items-center gap-2 text-white/75">
               <CreditCard size={20} />
               <span className="text-sm font-semibold">Remaining debt</span>
             </div>
-            <p className="mt-3 text-5xl font-semibold text-white"><BDTAmount amount={remaining} /></p>
+            <p className="mt-3 text-4xl font-semibold text-white sm:text-5xl"><BDTAmount amount={remaining} /></p>
             <p className="mt-3 max-w-xl text-sm leading-6 text-white/72">
               Avoid new credit card spending until this debt is cleared.
             </p>
@@ -51,7 +51,7 @@ export default function DebtPage() {
         </div>
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-4">
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <MetricCard label="Original Debt" value={<BDTAmount amount={state.debt.originalAmount || state.debt.outstanding} />} icon={CreditCard} tone="dark" />
         <MetricCard label="Total Paid" value={<BDTAmount amount={getDebtPaid(state.transactions)} />} icon={TrendingDown} tone="success" />
         <MetricCard label="Remaining" value={<BDTAmount amount={remaining} />} icon={ShieldAlert} tone="warning" />

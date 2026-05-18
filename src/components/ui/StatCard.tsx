@@ -23,7 +23,7 @@ export function StatCard({
   return (
     <div className={`rounded-[var(--notion-radius)] border p-4 shadow-[var(--notion-shadow-soft)] ${classes[tone]}`}>
       <div className="flex items-start justify-between gap-3">
-        <p className={`text-sm ${tone === "light" || tone === "warn" ? "text-[var(--notion-slate)]" : "text-white/75"}`}>
+        <p className={`text-xs font-semibold uppercase tracking-wide ${tone === "light" || tone === "warn" ? "text-[var(--notion-slate)]" : "text-white/75"}`}>
           {title}
         </p>
         {Icon ? <Icon size={20} className="shrink-0 opacity-80" /> : null}
@@ -36,7 +36,7 @@ export function StatCard({
 
 export function ProgressBar({ value, tone = "emerald" }: { value: number; tone?: "emerald" | "rose" }) {
   return (
-    <div className="h-2.5 overflow-hidden rounded-full bg-[var(--notion-surface)]">
+    <div className="h-2 overflow-hidden rounded-full bg-[var(--notion-surface)]">
       <div
         className={`h-full rounded-full ${tone === "emerald" ? "bg-[var(--notion-primary)]" : "bg-[var(--notion-error)]"}`}
         style={{ width: `${Math.min(Math.max(value, 0), 100)}%` }}

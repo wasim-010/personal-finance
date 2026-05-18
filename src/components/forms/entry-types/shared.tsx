@@ -6,7 +6,7 @@ import { FUND_LABELS, type FundKey, type IncomeSource, type Location, type NeedW
 export function AmountField({ form, setForm, label = "Amount" }: SubProps & { label?: string }) {
   return (
     <Field label={label}>
-      <input className="input" type="number" min="0" inputMode="decimal" value={form.amount} onChange={(event) => setForm({ ...form, amount: event.target.value })} />
+      <input className="input text-lg font-semibold sm:text-base" type="number" min="0" inputMode="decimal" value={form.amount} onChange={(event) => setForm({ ...form, amount: event.target.value })} />
     </Field>
   );
 }

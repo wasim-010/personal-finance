@@ -1,13 +1,13 @@
 "use client";
 
 import { ChangeEvent, useRef, useState } from "react";
-import { Bike, Database, Download, LockKeyhole, Save, Settings2, Upload, Wallet } from "lucide-react";
+import { Bike, Database, Download, LockKeyhole, Pencil, Save, Settings2, Upload, Wallet, X } from "lucide-react";
 import { useAppState } from "@/lib/state/useAppState";
 import { exportJSON, importAndMigrateJSON } from "@/lib/storage";
 import { todayKey } from "@/lib/format";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { BDTAmount } from "@/components/ui/BDTAmount";
-import { MetricCard, Pill, SectionHeader } from "@/components/ui/Premium";
+import { GroupPanel, MetricCard, Pill, SectionHeader } from "@/components/ui/Premium";
 import { BUDGET_CATEGORIES } from "@/lib/defaults/categories";
 import { calculateEngineOilCostPerKm, calculateFuelCostPerKm, calculateMaintenanceFundTarget, calculatePureMaintenanceCostPerKm, calculateWaterFilterMonthlyReserve } from "@/lib/calculations/bike";
 import { getTotalProtectedBalance } from "@/lib/calculations/balance";
@@ -48,11 +48,24 @@ const budgetKeys = BUDGET_CATEGORIES as BudgetCategory[];
 const incomeKeys = Object.keys(incomeLabels) as IncomeSource[];
 const fundKeys = Object.keys(FUND_LABELS) as FundKey[];
 
+const budgetSettingGroups: { title: string; helper: string; categories: BudgetCategory[] }[] = [
+  { title: "Home & Utilities", helper: "Rent, bills, and services", categories: ["House Rent + Water", "Gas", "Electricity", "Internet", "Mobile Recharge"] },
+  { title: "Food", helper: "Keep food lines separate for real control", categories: ["Regular Groceries", "Beef", "Chicken", "Fish", "Milk"] },
+  { title: "Protected Funds", helper: "Baby, emergency, bike, and debt targets", categories: ["Baby Delivery Fund", "Baby Starter Fund", "Emergency Fund", "Fuel Fund", "Parking", "Engine Oil Fund", "Bike Maintenance Fund", "Credit Card Payment"] },
+  { title: "Family & Personal", helper: "Personal, medical, support, and living costs", categories: ["Wife Medical", "Maid", "Charity", "Personal Expense", "Eating Out", "Saidpur Support"] },
+  { title: "Household Maintenance", helper: "Water filter and home maintenance stay separate from bike", categories: ["Water Filter", "Water Filter Replacement", "Household Maintenance Fund", "Home Repair", "Other Household Maintenance"] },
+  { title: "After Baby", helper: "Active when after-baby mode changes targets", categories: ["Diaper", "Baby Medicine", "Baby Doctor", "Baby Milk", "Baby Clothes", "Mother Nutrition", "Baby Monthly Care Fund"] },
+  { title: "Reconciliation", helper: "Use sparingly. Too much unknown adjustment means expenses are missing.", categories: ["Unknown Adjustment"] },
+];
+
 export default function SettingsPage() {
   const { state, dispatch } = useAppState();
   const [message, setMessage] = useState("");
   const [activeTab, setActiveTab] = useState<SettingsTab>("general");
   const [budgetModeToEdit, setBudgetModeToEdit] = useState<BudgetMode>(state.settings.budgetMode);
+  const [editingPartId, setEditingPartId] = useState<string | null>(null);
+  const [editingWaterFilter, setEditingWaterFilter] = useState(false);
+  const [sectionSheetOpen, setSectionSheetOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const settings = state.settings;
   const debt = state.debt;
@@ -160,6 +173,7 @@ export default function SettingsPage() {
   const maintenanceCostPerKm = calculatePureMaintenanceCostPerKm(settings.bikeSettings.bikeTrueCostPerKm, fuelCostPerKm, oilCostPerKm);
   const maintenanceTarget = calculateMaintenanceFundTarget(settings.bikeSettings.expectedMonthlyKm, maintenanceCostPerKm);
   const waterReserve = calculateWaterFilterMonthlyReserve(settings.waterFilter.price, settings.waterFilter.replacementIntervalMonths);
+  const editingPart = settings.bikeParts.find((part) => part.id === editingPartId);
 
   return (
     <>
@@ -182,7 +196,10 @@ export default function SettingsPage() {
       </section>
 
       <section className="mt-5 notion-card p-2">
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <button type="button" className="button-secondary w-full sm:hidden" onClick={() => setSectionSheetOpen(true)}>
+          {tabs.find((tab) => tab.value === activeTab)?.label}
+        </button>
+        <div className="hidden gap-2 overflow-x-auto pb-1 sm:flex">
           {tabs.map((tab) => (
             <button
               key={tab.value}
@@ -199,6 +216,37 @@ export default function SettingsPage() {
           ))}
         </div>
       </section>
+
+      {sectionSheetOpen ? (
+        <div className="fixed inset-0 z-40 bg-[rgba(16,24,40,0.28)] sm:hidden" onClick={() => setSectionSheetOpen(false)}>
+          <div className="absolute bottom-0 left-0 right-0 rounded-t-2xl border border-[var(--notion-hairline)] bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[var(--notion-shadow-medium)]" onClick={(event) => event.stopPropagation()}>
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--notion-primary-deep)]">Settings</p>
+                <h2 className="text-lg font-semibold">Choose section</h2>
+              </div>
+              <button type="button" className="button-secondary size-10 p-0" onClick={() => setSectionSheetOpen(false)} aria-label="Close settings sections">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="grid gap-2">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.value}
+                  type="button"
+                  onClick={() => {
+                    setActiveTab(tab.value);
+                    setSectionSheetOpen(false);
+                  }}
+                  className={`min-h-12 rounded-xl px-3 text-left text-sm font-semibold ${activeTab === tab.value ? "bg-[var(--notion-tint-lavender)] text-[var(--notion-primary-deep)]" : "bg-[var(--notion-surface-soft)] text-[var(--notion-ink)]"}`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {activeTab === "general" ? (
         <section className="mt-4 grid gap-4 lg:grid-cols-2">
@@ -323,41 +371,54 @@ export default function SettingsPage() {
 
       {activeTab === "budget" ? (
         <section className="mt-4">
-          <SettingsCard title="Budget Modes" description="Edit one mode at a time. Switching modes only changes planning and warnings.">
-            <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
-              {modeOptions.map((mode) => (
-                <button
-                  key={mode.value}
-                  type="button"
-                  onClick={() => setBudgetModeToEdit(mode.value)}
-                  className={`shrink-0 rounded-full px-3 py-2 text-sm font-semibold ${
-                    budgetModeToEdit === mode.value
-                      ? "bg-[var(--notion-brand-navy)] text-white"
-                      : "border border-[var(--notion-hairline)] bg-white text-[var(--notion-slate)]"
-                  }`}
-                >
-                  {mode.label}
-                </button>
-              ))}
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {budgetKeys.map((key) => (
-                <NumberField
-                  key={key}
-                  label={key}
-                  value={settings.budgets[budgetModeToEdit][key]}
-                  onChange={(value) =>
-                    updateSettings({
-                      budgets: {
-                        ...settings.budgets,
-                        [budgetModeToEdit]: { ...settings.budgets[budgetModeToEdit], [key]: value },
-                      },
-                    })
-                  }
-                />
-              ))}
-            </div>
-          </SettingsCard>
+          <SectionHeader title="Budget Modes" description="Edit one mode at a time. Switching modes only changes planning and warnings." />
+          <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+            {modeOptions.map((mode) => (
+              <button
+                key={mode.value}
+                type="button"
+                onClick={() => setBudgetModeToEdit(mode.value)}
+                className={`shrink-0 rounded-full px-3 py-2 text-sm font-semibold ${
+                  budgetModeToEdit === mode.value
+                    ? "bg-[var(--notion-brand-navy)] text-white"
+                    : "border border-[var(--notion-hairline)] bg-white text-[var(--notion-slate)]"
+                }`}
+              >
+                {mode.label}
+              </button>
+            ))}
+          </div>
+          <div className="space-y-3">
+            {budgetSettingGroups.map((group, index) => (
+              <GroupPanel
+                key={group.title}
+                title={group.title}
+                subtitle={group.helper}
+                defaultOpen={index < 2}
+                summary={<Pill tone="neutral">{group.categories.length} lines</Pill>}
+              >
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {group.categories
+                    .filter((key) => budgetKeys.includes(key))
+                    .map((key) => (
+                      <NumberField
+                        key={key}
+                        label={key}
+                        value={settings.budgets[budgetModeToEdit][key]}
+                        onChange={(value) =>
+                          updateSettings({
+                            budgets: {
+                              ...settings.budgets,
+                              [budgetModeToEdit]: { ...settings.budgets[budgetModeToEdit], [key]: value },
+                            },
+                          })
+                        }
+                      />
+                    ))}
+                </div>
+              </GroupPanel>
+            ))}
+          </div>
         </section>
       ) : null}
 
@@ -365,51 +426,109 @@ export default function SettingsPage() {
         <section className="mt-4 grid gap-4 xl:grid-cols-[0.8fr_1.2fr]">
           <SettingsCard title="Water Filter" description="Household maintenance, separate from bike.">
             <div className="grid gap-3 sm:grid-cols-2">
-              <NumberField label="Water filter price" value={settings.waterFilter.price} onChange={(value) => updateWaterFilter({ price: value, monthlyReserveTarget: calculateWaterFilterMonthlyReserve(value, settings.waterFilter.replacementIntervalMonths) })} />
-              <NumberField label="Interval months" value={settings.waterFilter.replacementIntervalMonths} onChange={(value) => updateWaterFilter({ replacementIntervalMonths: value, monthlyReserveTarget: calculateWaterFilterMonthlyReserve(settings.waterFilter.price, value) })} />
-              <Field label="Last changed date">
-                <input className="input" type="date" value={settings.waterFilter.lastChangedDate ?? ""} onChange={(event) => updateWaterFilter({ lastChangedDate: event.target.value })} />
-              </Field>
-              <Field label="Next change date">
-                <input className="input" type="date" value={settings.waterFilter.nextChangeDate ?? ""} onChange={(event) => updateWaterFilter({ nextChangeDate: event.target.value })} />
-              </Field>
+              <SummaryRow label="Price" value={<BDTAmount amount={settings.waterFilter.price} />} />
+              <SummaryRow label="Interval" value={`${settings.waterFilter.replacementIntervalMonths} months`} />
+              <SummaryRow label="Next change" value={settings.waterFilter.nextChangeDate || "Not set"} />
+              <SummaryRow label="Monthly reserve" value={<BDTAmount amount={waterReserve} />} />
             </div>
-            <p className="mt-3 rounded-xl bg-[var(--notion-surface-soft)] p-3 text-sm text-[var(--notion-slate)]">
-              Monthly water filter reserve: <BDTAmount amount={waterReserve} />.
-            </p>
+            <button type="button" className="button-secondary mt-4 w-full" onClick={() => setEditingWaterFilter(true)}>
+              <Pencil size={16} />
+              Edit water filter
+            </button>
           </SettingsCard>
 
-          <SettingsCard title="Bike Parts Price List" description="Update prices and intervals for future forecast reminders.">
-            <div className="space-y-3">
-              {settings.bikeParts.map((part) => (
-                <div key={part.id} className="rounded-xl border border-[var(--notion-hairline)] bg-white p-3">
-                  <div className="mb-3 flex items-center justify-between gap-3">
+          {editingWaterFilter ? (
+            <div className="fixed inset-0 z-40 flex items-end bg-[rgba(16,24,40,0.28)] p-0 backdrop-blur-sm sm:items-center sm:justify-center sm:p-6">
+              <div className="max-h-[90vh] w-full overflow-auto rounded-t-2xl border border-[var(--notion-hairline)] bg-white p-4 shadow-[var(--notion-shadow-medium)] sm:max-w-2xl sm:rounded-2xl">
+                <div className="mb-4 flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-[var(--notion-primary-deep)]">Edit Maintenance</p>
+                    <h3 className="mt-1 text-xl font-semibold text-[var(--notion-ink)]">Water Filter</h3>
+                  </div>
+                  <button type="button" className="button-secondary size-10 p-0" onClick={() => setEditingWaterFilter(false)} aria-label="Close water filter editor">
+                    <X size={18} />
+                  </button>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <NumberField label="Water filter price" value={settings.waterFilter.price} onChange={(value) => updateWaterFilter({ price: value, monthlyReserveTarget: calculateWaterFilterMonthlyReserve(value, settings.waterFilter.replacementIntervalMonths) })} />
+                  <NumberField label="Interval months" value={settings.waterFilter.replacementIntervalMonths} onChange={(value) => updateWaterFilter({ replacementIntervalMonths: value, monthlyReserveTarget: calculateWaterFilterMonthlyReserve(settings.waterFilter.price, value) })} />
+                  <Field label="Last changed date">
+                    <input className="input" type="date" value={settings.waterFilter.lastChangedDate ?? ""} onChange={(event) => updateWaterFilter({ lastChangedDate: event.target.value })} />
+                  </Field>
+                  <Field label="Next change date">
+                    <input className="input" type="date" value={settings.waterFilter.nextChangeDate ?? ""} onChange={(event) => updateWaterFilter({ nextChangeDate: event.target.value })} />
+                  </Field>
+                </div>
+                <button type="button" className="notion-primary-button mt-5 w-full" onClick={() => setEditingWaterFilter(false)}>Done</button>
+              </div>
+            </div>
+          ) : null}
+
+          <SettingsCard title="Bike Parts Price List" description="Summary first. Edit only the part you need.">
+            <div className="overflow-hidden rounded-xl border border-[var(--notion-hairline)] bg-white">
+              <div className="hidden grid-cols-[1.1fr_120px_140px_1fr_110px_80px] gap-3 bg-[var(--notion-surface-soft)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--notion-slate)] lg:grid">
+                <span>Part</span>
+                <span>Price</span>
+                <span>Interval</span>
+                <span>Last replaced</span>
+                <span>Reminder</span>
+                <span></span>
+              </div>
+              <div className="divide-y divide-[var(--notion-hairline)]">
+                {settings.bikeParts.map((part) => (
+                  <div key={part.id} className="grid gap-3 px-3 py-3 text-sm lg:grid-cols-[1.1fr_120px_140px_1fr_110px_80px] lg:items-center">
                     <div className="flex items-center gap-2">
                       <Bike size={17} className="text-[var(--notion-primary)]" />
                       <strong>{part.name}</strong>
                     </div>
-                    <Pill tone={part.reminderEnabled ? "success" : "neutral"}>{part.reminderEnabled ? "Reminder on" : "Reminder off"}</Pill>
+                    <div><BDTAmount amount={part.estimatedPrice} /></div>
+                    <div className="text-[var(--notion-slate)]">{formatPartInterval(part)}</div>
+                    <div className="text-[var(--notion-slate)]">{formatLastReplaced(part)}</div>
+                    <Pill tone={part.reminderEnabled ? "success" : "neutral"}>{part.reminderEnabled ? "On" : "Off"}</Pill>
+                    <button type="button" className="button-secondary min-h-9 px-3 py-1.5" onClick={() => setEditingPartId(part.id)}>
+                      <Pencil size={15} />
+                      Edit
+                    </button>
                   </div>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    <Field label="Part name">
-                      <input className="input" value={part.name} onChange={(event) => updateBikePart(part.id, { name: event.target.value })} />
-                    </Field>
-                    <NumberField label="Estimated price" value={part.estimatedPrice} onChange={(value) => updateBikePart(part.id, { estimatedPrice: value })} />
-                    <NumberField label="Interval KM" value={part.replacementIntervalKm ?? 0} onChange={(value) => updateBikePart(part.id, { replacementIntervalKm: value || undefined })} />
-                    <NumberField label="Interval months" value={part.replacementIntervalMonths ?? 0} onChange={(value) => updateBikePart(part.id, { replacementIntervalMonths: value || undefined })} />
-                    <NumberField label="Last replaced ODO" value={part.lastReplacedOdo ?? 0} onChange={(value) => updateBikePart(part.id, { lastReplacedOdo: value || undefined })} />
-                    <Field label="Last replaced date">
-                      <input className="input" type="date" value={part.lastReplacedDate ?? ""} onChange={(event) => updateBikePart(part.id, { lastReplacedDate: event.target.value || undefined })} />
-                    </Field>
-                  </div>
-                  <label className="mt-3 flex items-center gap-2 text-sm text-[var(--notion-slate)]">
-                    <input type="checkbox" checked={part.reminderEnabled} onChange={(event) => updateBikePart(part.id, { reminderEnabled: event.target.checked })} />
-                    Reminder active
-                  </label>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </SettingsCard>
+
+          {editingPart ? (
+            <div className="fixed inset-0 z-40 flex items-end bg-[rgba(16,24,40,0.28)] p-0 backdrop-blur-sm sm:items-center sm:justify-center sm:p-6">
+              <div className="max-h-[90vh] w-full overflow-auto rounded-t-2xl border border-[var(--notion-hairline)] bg-white p-4 shadow-[var(--notion-shadow-medium)] sm:max-w-2xl sm:rounded-2xl">
+                <div className="mb-4 flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-[var(--notion-primary-deep)]">Edit Bike Part</p>
+                    <h3 className="mt-1 text-xl font-semibold text-[var(--notion-ink)]">{editingPart.name}</h3>
+                  </div>
+                  <button type="button" className="button-secondary size-10 p-0" onClick={() => setEditingPartId(null)} aria-label="Close editor">
+                    <X size={18} />
+                  </button>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label="Part name">
+                    <input className="input" value={editingPart.name} onChange={(event) => updateBikePart(editingPart.id, { name: event.target.value })} />
+                  </Field>
+                  <NumberField label="Estimated price" value={editingPart.estimatedPrice} onChange={(value) => updateBikePart(editingPart.id, { estimatedPrice: value })} />
+                  <NumberField label="Interval KM" value={editingPart.replacementIntervalKm ?? 0} onChange={(value) => updateBikePart(editingPart.id, { replacementIntervalKm: value || undefined })} />
+                  <NumberField label="Interval months" value={editingPart.replacementIntervalMonths ?? 0} onChange={(value) => updateBikePart(editingPart.id, { replacementIntervalMonths: value || undefined })} />
+                  <NumberField label="Last replaced ODO" value={editingPart.lastReplacedOdo ?? 0} onChange={(value) => updateBikePart(editingPart.id, { lastReplacedOdo: value || undefined })} />
+                  <Field label="Last replaced date">
+                    <input className="input" type="date" value={editingPart.lastReplacedDate ?? ""} onChange={(event) => updateBikePart(editingPart.id, { lastReplacedDate: event.target.value || undefined })} />
+                  </Field>
+                </div>
+                <label className="mt-4 flex items-center gap-2 text-sm text-[var(--notion-slate)]">
+                  <input type="checkbox" checked={editingPart.reminderEnabled} onChange={(event) => updateBikePart(editingPart.id, { reminderEnabled: event.target.checked })} />
+                  Reminder active
+                </label>
+                <div className="mt-5 flex justify-end">
+                  <button type="button" className="notion-primary-button" onClick={() => setEditingPartId(null)}>Done</button>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </section>
       ) : null}
 
@@ -467,6 +586,15 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+function SummaryRow({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-[var(--notion-hairline)] bg-white px-3 py-2.5">
+      <p className="text-xs font-medium text-[var(--notion-slate)]">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-[var(--notion-ink)]">{value}</p>
+    </div>
+  );
+}
+
 function NumberField({
   label,
   value,
@@ -485,6 +613,7 @@ function NumberField({
       <input
         className="input"
         type="number"
+        inputMode="decimal"
         min={min}
         max={max}
         value={Number.isFinite(value) ? value : 0}
@@ -506,4 +635,18 @@ function downloadBlob(blob: Blob, filename: string) {
 function generateId() {
   if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+
+function formatPartInterval(part: BikePart) {
+  const pieces = [];
+  if (part.replacementIntervalKm) pieces.push(`${part.replacementIntervalKm.toLocaleString("en-IN")} km`);
+  if (part.replacementIntervalMonths) pieces.push(`${part.replacementIntervalMonths} mo`);
+  return pieces.length ? pieces.join(" / ") : "Not set";
+}
+
+function formatLastReplaced(part: BikePart) {
+  const pieces = [];
+  if (part.lastReplacedOdo) pieces.push(`${part.lastReplacedOdo.toLocaleString("en-IN")} km`);
+  if (part.lastReplacedDate) pieces.push(part.lastReplacedDate);
+  return pieces.length ? pieces.join(" · ") : "Not recorded";
 }

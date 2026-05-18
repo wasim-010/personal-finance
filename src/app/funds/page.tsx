@@ -56,10 +56,10 @@ export default function FundsPage() {
       </section>
 
       <section className="mt-4 notion-card p-4">
-        <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="mb-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
           <div>
             <p className="font-semibold text-[var(--notion-ink)]">Protected vaults</p>
-            <p className="text-sm text-[var(--notion-slate)]">যে টাকা future-এর জন্য, সেটা হাতে রাখা যাবে না.</p>
+            <p className="text-sm text-[var(--notion-slate)]">যে টাকা future-এর জন্য, সেটা spending money না.</p>
           </div>
           <Pill tone="primary">Fund Deposit = protect money</Pill>
         </div>
@@ -88,7 +88,7 @@ export default function FundsPage() {
           ))}
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid gap-4 lg:grid-cols-3">
           {keys.map((key) => {
             const progress = getFundProgress(key, state.fundBalances, state.settings);
             return <FundCard key={key} fundKey={key} progress={progress} />;
@@ -110,7 +110,7 @@ function FundCard({
   const low = progress.target > 0 && progress.percentage < 50;
 
   return (
-    <article className="notion-card p-4">
+    <article className="notion-card p-4 transition hover:-translate-y-0.5 hover:shadow-[var(--notion-shadow-medium)]">
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-2">
@@ -127,7 +127,7 @@ function FundCard({
           <p className="text-sm text-[var(--notion-slate)]">Saved</p>
           <p className="mt-1 text-2xl font-semibold text-[var(--notion-ink)]"><BDTAmount amount={progress.balance} /></p>
         </div>
-        <div className="rounded-xl bg-[var(--notion-surface-soft)] px-3 py-2 text-sm">
+        <div className="rounded-xl border border-[var(--notion-hairline)] bg-white px-3 py-2 text-sm">
           <p className="text-[var(--notion-slate)]">Target</p>
           <p className="font-semibold"><BDTAmount amount={progress.target} /></p>
         </div>
@@ -136,9 +136,18 @@ function FundCard({
       <div className="mt-4">
         <ProgressBar value={progress.percentage} />
         <p className="mt-2 text-sm text-[var(--notion-slate)]">
-          <BDTAmount amount={progress.remaining} /> remaining. Baby fund touch করবেন না.
+          <BDTAmount amount={progress.remaining} /> remaining. {getFundCardHelper(fundKey)}
         </p>
       </div>
     </article>
   );
+}
+
+function getFundCardHelper(fundKey: FundKey) {
+  if (fundKey === "baby_delivery") return "Delivery target comes before flexible spending.";
+  if (fundKey === "baby_starter") return "Starter items stay separate from delivery money.";
+  if (fundKey === "emergency") return "Emergency money protects the family plan.";
+  if (fundKey === "credit_card_payment") return "Reserved for card pressure only.";
+  if (fundKey === "household_maintenance") return "Home repairs and water filter stay here.";
+  return "Keep this bucket separated from daily spending.";
 }

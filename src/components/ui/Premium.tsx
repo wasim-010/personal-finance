@@ -16,10 +16,10 @@ export function SectionHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        {eyebrow ? <p className="text-xs font-semibold uppercase text-[var(--notion-primary-deep)]">{eyebrow}</p> : null}
-        <h2 className="text-xl font-semibold text-[var(--notion-ink)]">{title}</h2>
+        {eyebrow ? <p className="text-xs font-semibold uppercase tracking-wide text-[var(--notion-primary-deep)]">{eyebrow}</p> : null}
+        <h2 className="text-lg font-semibold text-[var(--notion-ink)] sm:text-xl">{title}</h2>
         {description ? <p className="mt-1 max-w-2xl text-sm leading-6 text-[var(--notion-slate)]">{description}</p> : null}
       </div>
       {action}
@@ -52,10 +52,10 @@ export function MetricCard({
   return (
     <article className={`rounded-[var(--notion-radius)] border p-4 shadow-[var(--notion-shadow-soft)] ${toneClass}`}>
       <div className="flex items-start justify-between gap-3">
-        <p className={`text-sm font-medium ${muted}`}>{label}</p>
+        <p className={`text-xs font-semibold uppercase tracking-wide ${muted}`}>{label}</p>
         {Icon ? <Icon size={18} className="shrink-0 opacity-80" /> : null}
       </div>
-      <div className="mt-2 text-2xl font-semibold">{value}</div>
+      <div className="mt-2 text-2xl font-semibold tracking-normal">{value}</div>
       {note ? <p className={`mt-1 text-xs leading-5 ${muted}`}>{note}</p> : null}
     </article>
   );
@@ -63,8 +63,8 @@ export function MetricCard({
 
 export function CompactStat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="rounded-xl bg-[var(--notion-surface-soft)] px-3 py-2">
-      <p className="text-xs text-[var(--notion-slate)]">{label}</p>
+    <div className="rounded-xl border border-[var(--notion-hairline)] bg-white/75 px-3 py-2.5">
+      <p className="text-xs font-medium text-[var(--notion-slate)]">{label}</p>
       <p className="mt-1 text-sm font-semibold text-[var(--notion-ink)]">{value}</p>
     </div>
   );
@@ -101,7 +101,7 @@ export function MoneyRow({
   strong?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-xl bg-[var(--notion-surface-soft)] px-3 py-2.5">
+    <div className="flex items-center justify-between gap-4 rounded-xl border border-[var(--notion-hairline)] bg-white px-3 py-2.5">
       <div>
         <p className={`text-sm ${strong ? "font-semibold text-[var(--notion-ink)]" : "text-[var(--notion-slate)]"}`}>{label}</p>
         {note ? <p className="mt-0.5 text-xs text-[var(--notion-steel)]">{note}</p> : null}
@@ -187,7 +187,7 @@ export function GroupPanel({
 }) {
   return (
     <details className="group notion-card overflow-hidden" open={defaultOpen}>
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 transition hover:bg-[var(--notion-surface-soft)]">
         <div>
           <h3 className="font-semibold text-[var(--notion-ink)]">{title}</h3>
           {subtitle ? <p className="mt-1 text-sm text-[var(--notion-slate)]">{subtitle}</p> : null}
@@ -197,9 +197,46 @@ export function GroupPanel({
           <ChevronDown size={18} className="text-[var(--notion-slate)] transition group-open:rotate-180" />
         </div>
       </summary>
-      <div className="border-t border-[var(--notion-hairline)] p-3 sm:p-4">{children}</div>
+      <div className="border-t border-[var(--notion-hairline)] bg-white/70 p-3 sm:p-4">{children}</div>
     </details>
   );
+}
+
+export function SegmentedControl<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { value: T; label: string }[];
+  value: T;
+  onChange: (value: T) => void;
+}) {
+  return (
+    <div className="flex gap-1 overflow-x-auto rounded-xl border border-[var(--notion-hairline)] bg-white p-1 shadow-[var(--notion-shadow-soft)]">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          onClick={() => onChange(option.value)}
+          className={`shrink-0 rounded-lg px-3 py-2 text-sm font-semibold transition ${
+            value === option.value
+              ? "bg-[var(--notion-brand-navy)] text-white"
+              : "text-[var(--notion-slate)] hover:bg-[var(--notion-surface-soft)] hover:text-[var(--notion-ink)]"
+          }`}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function PriorityList({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <div className="divide-y divide-[var(--notion-hairline)] overflow-hidden rounded-xl border border-[var(--notion-hairline)] bg-white">{children}</div>;
 }
 
 export function EmptyState({

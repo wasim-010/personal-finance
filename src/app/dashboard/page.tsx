@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, Baby, Bike, CreditCard, LockKeyhole, PlusCircle, ShieldCheck, Wallet } from "lucide-react";
+import { AlertTriangle, ArrowRight, Baby, Bike, CreditCard, LockKeyhole, PlusCircle, ShieldCheck, Wallet } from "lucide-react";
 import { useAppState } from "@/lib/state/useAppState";
 import { BDTAmount } from "@/components/ui/BDTAmount";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -15,7 +15,7 @@ import { computeWarnings } from "@/lib/calculations/warnings";
 import { getDebtPaid, getDebtProgress, getDebtRemaining } from "@/lib/calculations/debt";
 import { getBikeReport } from "@/lib/calculations/bike";
 import { CategoryChart, NeedWantWasteChart } from "@/components/dashboard/DashboardCharts";
-import { formatDate, formatDateShort, formatPercent } from "@/lib/format";
+import { formatDate, formatDateShort, formatPercent, todayKey } from "@/lib/format";
 
 const priorityFundKeys: FundKey[] = [
   "baby_delivery",
@@ -44,8 +44,8 @@ export default function DashboardPage() {
   const totalLocation = getTotalLocationBalance(state.locationBalances);
   const protectedMoney = getTotalProtectedBalance(state.fundBalances);
   const warnings = computeWarnings(state).sort((a, b) => severityRank(a.severity) - severityRank(b.severity));
-  const visibleWarnings = warnings.slice(0, 4);
-  const hiddenWarnings = warnings.slice(4);
+  const visibleWarnings = warnings.slice(0, 2);
+  const hiddenWarnings = warnings.slice(2);
   const bikeReport = getBikeReport(state, cycleTransactions);
   const cycleProgress = Math.min((cycle.daysElapsed / cycle.daysTotal) * 100, 100);
   const remainingDays = Math.max(cycle.daysTotal - cycle.daysElapsed, 0);
@@ -61,6 +61,14 @@ export default function DashboardPage() {
   const recentEntries = [...state.transactions]
     .sort((a, b) => `${b.date}${b.createdAt}`.localeCompare(`${a.date}${a.createdAt}`))
     .slice(0, 5);
+  const hasSpendingData = categoryData.length > 0 || totals.needs > 0 || totals.wants > 0 || totals.waste > 0;
+  const nextAction = getDashboardNextAction(
+    state.transactions,
+    state.fundBalances.baby_delivery,
+    state.settings.fundTargets.baby_delivery,
+    getDebtRemaining(state),
+    totals.income,
+  );
 
   return (
     <>
@@ -70,8 +78,8 @@ export default function DashboardPage() {
         action={<Link href="/add" className="notion-primary-button"><PlusCircle size={19} /> Add entry</Link>}
       />
 
-      <section className="notion-hero-band mb-5 p-5 sm:p-7 lg:p-8">
-        <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr] lg:items-stretch">
+      <section className="notion-hero-band mb-5 p-4 sm:p-7 lg:p-8">
+        <div className="relative z-10 grid gap-5 lg:grid-cols-[1.2fr_0.8fr] lg:items-stretch">
           <div className="flex flex-col justify-between">
             <div>
               <div className="flex flex-wrap items-center gap-2">
@@ -82,7 +90,7 @@ export default function DashboardPage() {
                 <BDTAmount amount={spendable} size="hero" className="text-5xl sm:text-6xl" />
               </div>
               <p className="mt-4 max-w-2xl text-base leading-7 text-white/75">
-                This is the money you can actually spend after protecting future money. Protected funds should not make you feel rich.
+                This is the money you can actually spend after baby, debt, emergency, and bike money are protected.
               </p>
             </div>
             <div className="mt-6 grid gap-3 sm:grid-cols-3">
@@ -92,7 +100,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="workspace-mockup-card p-4">
+          <div className="workspace-mockup-card hidden p-4 sm:block">
             <div className="mb-3 flex items-center justify-between border-b border-[var(--notion-hairline)] pb-3">
               <div>
                 <p className="text-sm font-semibold">{cycle.label}</p>
@@ -122,6 +130,32 @@ export default function DashboardPage() {
         <MetricCard label="Bike Health" value={bikeReport.health} icon={Bike} tone={bikeReport.health === "Danger" ? "warning" : bikeReport.health === "Safe" ? "success" : "light"} />
       </section>
 
+      <section className="mt-5 notion-card p-4 sm:hidden">
+        <SectionHeader title="Money by Location" description="Physical money only." />
+        <div className="space-y-2">
+          {Object.entries(state.locationBalances).map(([location, balance]) => (
+            <div key={location} className="flex min-h-11 items-center justify-between rounded-lg border border-[var(--notion-hairline)] bg-white px-3 text-sm">
+              <span className="text-[var(--notion-slate)]">{locationLabels[location] ?? location}</span>
+              <BDTAmount amount={balance} className="font-semibold" />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-5 notion-card p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--notion-primary-deep)]">Next Action</p>
+            <h2 className="mt-1 text-xl font-semibold text-[var(--notion-ink)]">{nextAction.title}</h2>
+            <p className="mt-1 text-sm text-[var(--notion-slate)]">{nextAction.helper}</p>
+          </div>
+          <Link href={nextAction.href} className="button-secondary">
+            {nextAction.cta}
+            <ArrowRight size={17} />
+          </Link>
+        </div>
+      </section>
+
       <section className="mt-5 grid gap-4 xl:grid-cols-[1fr_0.82fr]">
         <div className="notion-card p-4">
           <SectionHeader
@@ -137,7 +171,7 @@ export default function DashboardPage() {
                   label={FUND_LABELS[key]}
                   current={progress.balance}
                   target={progress.target}
-                  helper={key === "baby_delivery" ? "Baby fund touch করবেন না." : undefined}
+                  helper={getFundHelper(key)}
                 />
               );
             })}
@@ -162,15 +196,15 @@ export default function DashboardPage() {
 
       {warnings.length ? (
         <section className="mt-5">
-          <SectionHeader title="Smart alerts" description="Highest-priority warnings first. Keep action focused." />
-          <div className="grid gap-2">
+          <SectionHeader title="Smart alerts" description="Only the top warnings are shown here so the dashboard stays focused." />
+          <div className="grid gap-2 md:grid-cols-2">
             {visibleWarnings.map((warning) => (
               <AlertCard key={warning.id} severity={warning.severity} message={warning.message} />
             ))}
           </div>
           {hiddenWarnings.length ? (
             <details className="mt-2 rounded-xl border border-[var(--notion-hairline)] bg-white p-3">
-              <summary className="cursor-pointer text-sm font-semibold text-[var(--notion-primary-deep)]">View all alerts ({warnings.length})</summary>
+              <summary className="cursor-pointer text-sm font-semibold text-[var(--notion-primary-deep)]">View remaining alerts ({hiddenWarnings.length})</summary>
               <div className="mt-3 grid gap-2">
                 {hiddenWarnings.map((warning) => (
                   <AlertCard key={warning.id} severity={warning.severity} message={warning.message} />
@@ -181,10 +215,16 @@ export default function DashboardPage() {
         </section>
       ) : null}
 
-      <section className="mt-5 grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-        <CategoryChart data={categoryData} />
-        <NeedWantWasteChart need={totals.needs} want={totals.wants} waste={totals.waste} />
-      </section>
+      {hasSpendingData ? (
+        <section className="mt-5 grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+          <CategoryChart data={categoryData} />
+          <NeedWantWasteChart need={totals.needs} want={totals.wants} waste={totals.waste} />
+        </section>
+      ) : (
+        <section className="mt-5 rounded-xl border border-dashed border-[var(--notion-hairline-strong)] bg-white px-4 py-3 text-sm text-[var(--notion-slate)]">
+          No spending data yet. Add today&apos;s first expense.
+        </section>
+      )}
 
       <section className="mt-5 grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
         <div className="notion-card p-4">
@@ -202,7 +242,7 @@ export default function DashboardPage() {
         <div className="notion-card p-4">
           <SectionHeader title="Recent entries" description="Latest records from all money activity." action={<Link href="/transactions" className="button-secondary">View all</Link>} />
           <div className="space-y-2">
-            {recentEntries.length ? recentEntries.map((entry) => <RecentEntry key={entry.id} entry={entry} />) : (
+            {recentEntries.length ? recentEntries.slice(0, 3).map((entry) => <RecentEntry key={entry.id} entry={entry} />) : (
               <p className="rounded-xl bg-[var(--notion-surface-soft)] p-3 text-sm text-[var(--notion-slate)]">No entries yet. Add today&apos;s first record.</p>
             )}
           </div>
@@ -234,4 +274,43 @@ function severityRank(severity: "critical" | "warning" | "info") {
   if (severity === "critical") return 0;
   if (severity === "warning") return 1;
   return 2;
+}
+
+function getDashboardNextAction(
+  transactions: Transaction[],
+  babyBalance: number,
+  babyTarget: number,
+  debtRemaining: number,
+  cycleIncome: number,
+) {
+  const today = todayKey();
+  if (!transactions.some((tx) => tx.type === "opening_balance")) {
+    return { title: "Add opening balance", helper: "Start with the money currently in Bank, wallet, bKash, Nagad, and envelopes.", href: "/add", cta: "Add balance" };
+  }
+  if (!transactions.some((tx) => tx.date === today && (tx.type === "expense" || tx.type === "bike_entry" || tx.type === "household_maintenance"))) {
+    return { title: "Add today's expense", helper: "Keep the cycle accurate with one quick entry.", href: "/add", cta: "Record expense" };
+  }
+  if (!transactions.some((tx) => tx.type === "bike_entry" && typeof tx.currentOdo === "number" && tx.currentOdo > 0)) {
+    return { title: "Add current ODO", helper: "Bike cost gets cleaner after the first ODO reading.", href: "/add", cta: "Add ODO" };
+  }
+  if (babyTarget > 0 && babyBalance < babyTarget) {
+    return { title: "Protect baby fund", helper: "Move available money into the delivery fund before extra spending.", href: "/add", cta: "Protect fund" };
+  }
+  if (debtRemaining > 0) {
+    return { title: "Pay credit card", helper: "Reduce the card before new card spending.", href: "/add", cta: "Record payment" };
+  }
+  if (cycleIncome > 0) {
+    return { title: "Move salary into funds", helper: "Salary money becomes usable only after the planned fund split.", href: "/cash-flow", cta: "Open plan" };
+  }
+  return { title: "Review recent entries", helper: "Check that every taka from today has a record.", href: "/transactions", cta: "Review" };
+}
+
+function getFundHelper(key: FundKey) {
+  if (key === "baby_delivery") return "Delivery money is protected before daily spending.";
+  if (key === "baby_starter") return "Starter money covers the first baby setup costs.";
+  if (key === "emergency") return "Emergency money protects the family plan.";
+  if (key === "credit_card_payment") return "Payment reserve keeps debt from growing.";
+  if (key === "fuel") return "Fuel stays separate from groceries.";
+  if (key === "engine_oil") return "Oil reserve prevents sudden bike pressure.";
+  if (key === "bike_maintenance") return "Parts and maintenance need their own reserve.";
 }

@@ -29,14 +29,14 @@ export default function BabyFundPage() {
         action={<Link href="/add" className="notion-primary-button"><PlusCircle size={19} /> Add saving</Link>}
       />
 
-      <section className="notion-hero-band mb-5 p-5 sm:p-7">
+      <section className="notion-hero-band mb-5 p-4 sm:p-7">
         <div className="grid gap-5 lg:grid-cols-[1fr_0.8fr] lg:items-center">
           <div>
             <div className="flex items-center gap-2 text-white/75">
               <Baby size={20} />
               <span className="text-sm font-semibold">Protected for baby</span>
             </div>
-            <p className="mt-3 text-5xl font-semibold text-white"><BDTAmount amount={totalBabyProtected} /></p>
+            <p className="mt-3 text-4xl font-semibold text-white sm:text-5xl"><BDTAmount amount={totalBabyProtected} /></p>
             <p className="mt-3 max-w-xl text-sm leading-6 text-white/72">
               This money is only for delivery, medical safety, and starter baby needs. Keep it protected before spending.
             </p>
@@ -45,7 +45,7 @@ export default function BabyFundPage() {
             <p className="text-sm text-[var(--notion-slate)]">Total baby target</p>
             <p className="mt-1 text-2xl font-semibold"><BDTAmount amount={totalBabyTarget} /></p>
             <p className="mt-3 rounded-xl bg-[var(--notion-tint-yellow)] p-3 text-sm text-[#6f4e00]">
-              “This fund is only for baby delivery and medical safety.”
+              This fund is only for baby delivery and medical safety.
             </p>
           </div>
         </div>
@@ -60,6 +60,11 @@ export default function BabyFundPage() {
       <section className="mt-5 grid gap-4 lg:grid-cols-2">
         <ProgressRow label={FUND_LABELS.baby_delivery} current={delivery.balance} target={delivery.target} helper="Delivery and medical safety." />
         <ProgressRow label={FUND_LABELS.baby_starter} current={starter.balance} target={starter.target} helper="Diaper, medicine, doctor, clothes, milk." />
+      </section>
+
+      <section className="mt-5 rounded-xl border border-[var(--notion-hairline)] bg-white p-4 text-sm">
+        <p className="font-semibold text-[var(--notion-ink)]">Next milestone</p>
+        <p className="mt-1 text-[var(--notion-slate)]">Save first <BDTAmount amount={Math.min(Math.max(totalBabyTarget - totalBabyProtected, 0), 5000)} /> toward the baby target.</p>
       </section>
 
       <section className="mt-5 notion-card p-4">
