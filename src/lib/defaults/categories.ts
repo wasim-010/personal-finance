@@ -1,0 +1,45 @@
+import type { BudgetCategory } from "@/types/finance";
+
+export const BUDGET_CATEGORIES: BudgetCategory[] = [
+  "House Rent + Water",
+  "Gas",
+  "Electricity",
+  "Internet",
+  "Mobile Recharge",
+  "Regular Groceries",
+  "Beef",
+  "Chicken",
+  "Fish",
+  "Milk",
+  "Wife Medical",
+  "Maid",
+  "Charity",
+  "Personal Expense",
+  "Eating Out",
+  "Fuel Fund",
+  "Parking",
+  "Engine Oil Fund",
+  "Bike Maintenance Fund",
+  "Baby Delivery Fund",
+  "Baby Starter Fund",
+  "Emergency Fund",
+  "Credit Card Payment",
+  "Saidpur Support",
+  "Unknown Adjustment",
+  "Diaper",
+  "Baby Medicine",
+  "Baby Doctor",
+  "Baby Milk",
+  "Baby Clothes",
+  "Mother Nutrition",
+  "Baby Monthly Care Fund",
+  "Water Filter",
+  "Water Filter Replacement",
+  "Household Maintenance Fund",
+  "Home Repair",
+  "Other Household Maintenance",
+];
+
+export const EXPENSE_CATEGORIES = BUDGET_CATEGORIES;
+
+export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
