@@ -47,6 +47,24 @@ export const transactionTypeOptions: { value: TransactionType; label: string }[]
 
 const mostUsedTypes: TransactionType[] = ["expense", "income", "fund_deposit"];
 
+const groupedMoreTypes: { title: string; helper: string; types: TransactionType[] }[] = [
+  {
+    title: "Planning",
+    helper: "Debt, baby saving, and physical money movement",
+    types: ["debt_payment", "transfer"],
+  },
+  {
+    title: "Bike & Maintenance",
+    helper: "ODO, fuel, oil, water filter, and home repairs",
+    types: ["bike_entry", "household_maintenance"],
+  },
+  {
+    title: "Advanced",
+    helper: "Use only when adjusting protected funds or starting balances",
+    types: ["opening_balance", "fund_transfer", "fund_withdrawal", "bike_km"],
+  },
+];
+
 export const locationOptions: { value: Location; label: string }[] = [
   { value: "bank", label: "Bank" },
   { value: "wallet", label: "Wallet / Cash in Hand" },
@@ -340,27 +358,39 @@ export function AddEntryForm() {
         </div>
         <details className="mt-3">
           <summary className="cursor-pointer rounded-xl border border-[var(--notion-hairline)] bg-white px-3 py-2 text-sm font-semibold text-[var(--notion-slate)]">More entry types</summary>
-          <div className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-            {transactionTypeOptions.filter((option) => !mostUsedTypes.includes(option.value)).map((option) => {
-              const active = form.type === option.value;
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setType(option.value)}
-                  className={`min-h-12 rounded-xl border p-3 text-left transition ${
-                    active
-                      ? "border-[var(--notion-primary)] bg-[var(--notion-tint-lavender)] text-[var(--notion-primary-deep)]"
-                      : "border-[var(--notion-hairline)] bg-white text-[var(--notion-ink)]"
-                  }`}
-                >
-                  <span className="text-sm font-semibold">{option.label}</span>
-                  <span className={`mt-1 block text-xs ${active ? "text-[var(--notion-primary-deep)]" : "text-[var(--notion-slate)]"}`}>
-                    {transactionTypeHelpers[option.value]}
-                  </span>
-                </button>
-              );
-            })}
+          <div className="mt-3 space-y-3">
+            {groupedMoreTypes.map((group) => (
+              <div key={group.title} className="rounded-xl border border-[var(--notion-hairline)] bg-white p-3">
+                <div className="mb-2">
+                  <p className="text-sm font-semibold text-[var(--notion-ink)]">{group.title}</p>
+                  <p className="text-xs text-[var(--notion-slate)]">{group.helper}</p>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {group.types.map((type) => {
+                    const option = transactionTypeOptions.find((item) => item.value === type);
+                    if (!option) return null;
+                    const active = form.type === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => setType(option.value)}
+                        className={`min-h-12 rounded-xl border p-3 text-left transition ${
+                          active
+                            ? "border-[var(--notion-primary)] bg-[var(--notion-tint-lavender)] text-[var(--notion-primary-deep)]"
+                            : "border-[var(--notion-hairline)] bg-white text-[var(--notion-ink)]"
+                        }`}
+                      >
+                        <span className="text-sm font-semibold">{option.label}</span>
+                        <span className={`mt-1 block text-xs ${active ? "text-[var(--notion-primary-deep)]" : "text-[var(--notion-slate)]"}`}>
+                          {transactionTypeHelpers[option.value]}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         </details>
       </section>

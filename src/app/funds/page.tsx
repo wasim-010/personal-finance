@@ -147,6 +147,10 @@ function getFundCardHelper(fundKey: FundKey) {
   if (fundKey === "baby_delivery") return "Delivery target comes before flexible spending.";
   if (fundKey === "baby_starter") return "Starter items stay separate from delivery money.";
   if (fundKey === "emergency") return "Emergency money protects the family plan.";
+  if (fundKey === "fuel") return "Monthly bike fuel money, separate from normal wallet cash.";
+  if (fundKey === "engine_oil") return "Save before the next oil change comes.";
+  if (fundKey === "parking") return "Parking money stays visible instead of hiding in small cash.";
+  if (fundKey === "bike_maintenance") return "Tyre, brake, chain, suspension, and servicing.";
   if (fundKey === "credit_card_payment") return "Reserved for card pressure only.";
   if (fundKey === "household_maintenance") return "Home repairs and water filter stay here.";
   return "Keep this bucket separated from daily spending.";

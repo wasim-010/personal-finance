@@ -135,7 +135,7 @@ export default function BudgetPage() {
                 key={group.title}
                 title={group.title}
                 subtitle={group.helper}
-                defaultOpen={false}
+                defaultOpen={percent >= 100 && limit > 0}
                 summary={
                   <div className="min-w-44">
                     <div className="mb-1 flex items-center justify-between gap-3 text-xs text-[var(--notion-slate)]">

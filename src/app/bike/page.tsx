@@ -7,7 +7,7 @@ import { useAppState } from "@/lib/state/useAppState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { BDTAmount } from "@/components/ui/BDTAmount";
 import { ProgressBar } from "@/components/ui/StatCard";
-import { CompactStat, EmptyState, MetricCard, Pill, SectionHeader } from "@/components/ui/Premium";
+import { CompactStat, EmptyState, MetricCard, Pill, PlainRow, SectionHeader } from "@/components/ui/Premium";
 import { getCurrentCycle, getCycleTransactions } from "@/lib/calculations/cycle";
 import { getBikeReport, getPartForecast } from "@/lib/calculations/bike";
 import { getDebtRemaining } from "@/lib/calculations/debt";
@@ -91,11 +91,11 @@ export default function BikePage() {
             description="Fuel, oil, maintenance reserve, and true cost are kept separate."
           />
           <div className="space-y-3">
-            <CostBar label="Cash cost per KM" value={report.cashCostPerKm} max={report.trueCostPerKm} />
-            <CostBar label="Fuel cost per KM" value={report.fuelCostPerKm} max={report.trueCostPerKm} />
-            <CostBar label="Engine oil cost per KM" value={report.engineOilCostPerKm} max={report.trueCostPerKm} />
-            <CostBar label="Maintenance reserve per KM" value={report.maintenanceReservePerKm} max={report.trueCostPerKm} />
-            <CostBar label="True cost per KM" value={report.trueCostPerKm} max={report.trueCostPerKm} strong />
+            <CostRow label="Cash cost per KM" value={report.cashCostPerKm} helper="Actual paid bike expenses divided by KM run." />
+            <CostRow label="Fuel cost per KM" value={report.fuelCostPerKm} helper="Fuel price divided by expected mileage." />
+            <CostRow label="Engine oil cost per KM" value={report.engineOilCostPerKm} helper="Oil price divided by oil life." />
+            <CostRow label="Maintenance reserve per KM" value={report.maintenanceReservePerKm} helper="Future tyre, brake, chain, and repair reserve." />
+            <CostRow label="True cost per KM" value={report.trueCostPerKm} helper="Long-term full bike cost estimate." strong />
           </div>
         </article>
 
@@ -172,7 +172,7 @@ export default function BikePage() {
                   {entry.partName ? <Pill tone="primary">{entry.partName}</Pill> : null}
                 </div>
                 <p className="mt-1 text-xs text-[var(--notion-slate)]">
-                  {formatDate(entry.date)} Â· ODO {entry.currentOdo?.toLocaleString("en-IN") ?? "-"} Â· KM {entry.kmRun ?? entry.km ?? 0}
+                  {formatDate(entry.date)} - ODO {entry.currentOdo?.toLocaleString("en-IN") ?? "-"} - KM {entry.kmRun ?? entry.km ?? 0}
                 </p>
               </div>
               <BDTAmount amount={entry.amount} />
@@ -190,16 +190,14 @@ export default function BikePage() {
   );
 }
 
-function CostBar({ label, value, max, strong }: { label: string; value: number; max: number; strong?: boolean }) {
-  const percent = max > 0 ? Math.min((value / max) * 100, 100) : 0;
+function CostRow({ label, value, helper, strong }: { label: string; value: number; helper: string; strong?: boolean }) {
   return (
-    <div className="rounded-xl bg-[var(--notion-surface-soft)] p-3">
-      <div className="mb-2 flex items-center justify-between gap-3 text-sm">
-        <span className={strong ? "font-semibold text-[var(--notion-ink)]" : "text-[var(--notion-slate)]"}>{label}</span>
-        <BDTAmount amount={value} className="font-semibold" />
-      </div>
-      <ProgressBar value={percent} />
-    </div>
+    <PlainRow
+      label={label}
+      helper={helper}
+      value={<BDTAmount amount={value} className="font-semibold" />}
+      strong={strong}
+    />
   );
 }
 

@@ -24,10 +24,11 @@ export default function CashFlowPage() {
         action={<Link href="/add" className="notion-primary-button"><PlusCircle size={19} /> Record allocation</Link>}
       />
 
-      <section className="grid gap-3 sm:grid-cols-3">
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard label="Planned Income" value={<BDTAmount amount={totalIncome} />} icon={Wallet} tone="dark" />
         <MetricCard label="Planned Allocation" value={<BDTAmount amount={totalAllocated} />} icon={CheckCircle2} />
         <MetricCard label="Cycle Start" value={`Day ${state.settings.salaryDate}`} icon={CalendarDays} tone="success" />
+        <MetricCard label="Current Mode" value={state.settings.budgetMode.replace("_", " ")} tone="light" />
       </section>
 
       <section className="mt-4 rounded-[var(--notion-radius)] border border-[#fedf89] bg-[var(--notion-tint-yellow)] p-4 text-sm font-medium text-[var(--notion-charcoal)]">
@@ -97,6 +98,10 @@ export default function CashFlowPage() {
                         </div>
                       ))}
                     </div>
+                    <Link href="/add" className="button-secondary mt-4 w-full justify-center">
+                      <PlusCircle size={17} />
+                      Record this allocation
+                    </Link>
                 </div>
               </details>
             );

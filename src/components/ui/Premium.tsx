@@ -33,12 +33,14 @@ export function MetricCard({
   note,
   icon: Icon,
   tone = "light",
+  compact = false,
 }: {
   label: string;
   value: React.ReactNode;
   note?: string;
   icon?: LucideIcon;
   tone?: "light" | "primary" | "dark" | "warning" | "success";
+  compact?: boolean;
 }) {
   const toneClass = {
     light: "border-[var(--notion-hairline)] bg-white text-[var(--notion-ink)]",
@@ -50,14 +52,36 @@ export function MetricCard({
   const muted = tone === "primary" || tone === "dark" ? "text-white/72" : "text-[var(--notion-slate)]";
 
   return (
-    <article className={`rounded-[var(--notion-radius)] border p-4 shadow-[var(--notion-shadow-soft)] ${toneClass}`}>
+    <article className={`rounded-[var(--notion-radius)] border ${compact ? "p-3" : "p-4"} shadow-[var(--notion-shadow-soft)] ${toneClass}`}>
       <div className="flex items-start justify-between gap-3">
         <p className={`text-xs font-semibold uppercase tracking-wide ${muted}`}>{label}</p>
         {Icon ? <Icon size={18} className="shrink-0 opacity-80" /> : null}
       </div>
-      <div className="mt-2 text-2xl font-semibold tracking-normal">{value}</div>
+      <div className={`${compact ? "mt-1 text-xl" : "mt-2 text-2xl"} font-semibold tracking-normal`}>{value}</div>
       {note ? <p className={`mt-1 text-xs leading-5 ${muted}`}>{note}</p> : null}
     </article>
+  );
+}
+
+export function PlainRow({
+  label,
+  value,
+  helper,
+  strong,
+}: {
+  label: string;
+  value: React.ReactNode;
+  helper?: string;
+  strong?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-xl bg-[var(--notion-surface-soft)] px-3 py-2.5 text-sm">
+      <div>
+        <p className={strong ? "font-semibold text-[var(--notion-ink)]" : "text-[var(--notion-slate)]"}>{label}</p>
+        {helper ? <p className="mt-0.5 text-xs text-[var(--notion-steel)]">{helper}</p> : null}
+      </div>
+      <div className={strong ? "font-semibold text-[var(--notion-ink)]" : "text-[var(--notion-ink)]"}>{value}</div>
+    </div>
   );
 }
 
